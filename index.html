@@ -1,1 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Orphica – Minta din känsla</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+</head>
+<body style="font-family: sans-serif; background: #f0f0f0; padding: 2em;">
+  <h1>🕊️ Orphica</h1>
+  <p>Skriv ett meddelande från hjärtat:</p>
+  <textarea id="message" rows="4" cols="50" placeholder="Mitt hjärta säger..."></textarea><br><br>
+  <button onclick="mint()">Mint till kedjan</button>
+  <p id="status" style="margin-top: 2em;"></p>
 
+  <script>
+    const CONTRACT_ADDRESS = "0x5b7C915a0BaD7d00BcF68E835a5eBE9Ea76F1887";
+    const ABI = [
+      "function mintMessage(string calldata message) public",
+      "event MessageMinted(address indexed from, string message, uint256 timestamp)"
+    ];
+
+    async function mint() {
+      const message = document.getElementById('message').value;
+      const status = document.getElementById('status');
+      if (!message) {
+        alert("Skriv något först!");
+        return;
+      }
+
+      if (!window.ethereum) {
+        status.innerText = "MetaMask krävs!";
+        return;
+      }
+
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+        const tx = await contract.mintMessage(message);
+        status.innerText = "⏳ Transaktion skickad… Väntar på bekräftelse...";
+        await tx.wait();
+        status.innerText = "✅ Din känsla har sparats på blockchain!";
+      } catch (err) {
+        console.error(err);
+        status.innerText = "❌ Något gick fel: " + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
